@@ -4,7 +4,7 @@
 # Update and install dependencies
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y docker.io docker-compose git
+apt-get install -y docker.io docker-compose-v2 git
 
 # Enable and start Docker
 systemctl enable docker
@@ -28,8 +28,8 @@ if ! git clone https://github.com/vulnerable-labs/synthetix.git .; then
 fi
 
 # Start the lab
-# Note: Using the standalone docker-compose binary installed via apt
-if ! docker-compose up -d --build; then
+# Note: Using the modern Docker Compose V2 plugin
+if ! docker compose up -d --build; then
     echo "CRITICAL ERROR: Failed to build and start the Docker containers. Halting startup script to allow debugging."
     exit 1
 fi
