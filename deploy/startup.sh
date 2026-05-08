@@ -19,6 +19,14 @@ echo \
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+# Configure Docker containers to use Google DNS (Fixes "Temporary failure in name resolution")
+mkdir -p /etc/docker
+cat <<EOF > /etc/docker/daemon.json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+EOF
+systemctl restart docker
 # Disable internal host firewalls just in case
 ufw disable || true
 iptables -F || true
