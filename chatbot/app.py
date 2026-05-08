@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, render_template
+import random
 
 app = Flask(__name__)
-
-import random
 
 def simulate_llm(prompt):
     prompt_lower = prompt.lower()
