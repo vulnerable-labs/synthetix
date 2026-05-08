@@ -10,6 +10,10 @@ apt-get install -y docker.io docker-compose-v2 git
 systemctl enable docker
 systemctl start docker
 
+# Disable any internal firewalls that might block traffic
+ufw disable || true
+iptables -F || true
+
 # Create the Flag
 echo "VulnOS{p01s0n3d_th3_w3ll_3scap3d_th3_c0nta1n3r}" > /root/flag.txt
 chmod 400 /root/flag.txt
@@ -42,13 +46,17 @@ echo "Startup script execution completed. The lab infrastructure is configured."
 
 echo "Beginning Forensic Scrub and VM Preparation..."
 
-# Step 1: Nuke Phantom Users 
-# Automatically detects and deletes any users injected by GCP (e.g., 'gaurav') while preserving 'ubuntu'
-for phantom_user in $(awk -F: '$3 >= 1000 && $1 != "ubuntu" && $1 != "nobody" {print $1}' /etc/passwd); do
-    echo "Nuking phantom user: $phantom_user"
-    pkill -u "$phantom_user" || true
-    userdel -r "$phantom_user" || true
-done
+# Step 1: Nuke Phantom Setup User
+REAL_USER=$(logname 2>/dev/null || echo $SUDO_USER)
+
+if [ -n "$REAL_USER" ] && [ "$REAL_USER" != "root" ] && [ "$REAL_USER" != "ubuntu" ] && [ "$REAL_USER" != "alex" ]; then
+    echo "[!] Cleaning up setup user: $REAL_USER"
+    pkill -u "$REAL_USER" || true
+    userdel -r "$REAL_USER" 2>/dev/null || true
+    echo "[+] Cleanup complete."
+else
+    echo "[*] No setup user to delete."
+fi
 
 # Step 2: Gag the Google Guest Agent
 # Prevents GCP from overwriting the OS hostname on boot
@@ -101,7 +109,8 @@ for home_dir in /root /home/*; do
     fi
 done
 
-# 6. Clear active memory history and force immediate shutdown
-# The VM will shut down, making it perfectly pristine for a GCP Image Snapshot
-echo "Scrub complete. Shutting down the machine for image creation."
-history -c && shutdown -h now
+# 6. Clear active memory history
+echo "Scrub complete. The VM is fully prepared."
+echo "You may now connect to the VM via its external IP to test the lab."
+echo "When you are completely finished testing, MANUALLY stop the VM and take your snapshot!"
+history -c || true
