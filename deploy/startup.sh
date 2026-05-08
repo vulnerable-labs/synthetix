@@ -4,29 +4,22 @@
 # Update and install dependencies
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y docker.io docker-compose-v2 git
+apt-get install -y ca-certificates curl gnupg git
 
-# Nuclear DNS fix for Ubuntu 24.04 (Prevents BuildKit DNS failures)
-systemctl stop systemd-resolved || true
-systemctl disable systemd-resolved || true
-rm -f /etc/resolv.conf
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+# Install Docker via Official Repository (Cleaner & More Reliable)
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
 
-# Configure Docker to use Google DNS as a fallback
-mkdir -p /etc/docker
-cat <<EOF > /etc/docker/daemon.json
-{
-  "dns": ["8.8.8.8", "8.8.4.4"]
-}
-EOF
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Enable and start Docker
-systemctl daemon-reload
-systemctl enable docker
-systemctl restart docker
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Disable any internal firewalls that might block traffic
+# Disable internal host firewalls just in case
 ufw disable || true
 iptables -F || true
 
