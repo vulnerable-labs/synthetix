@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  jupyter:
+    image: jupyter/base-notebook:latest
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./jupyter/AI_Development.ipynb:/home/jovyan/work/AI_Development.ipynb
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    restart: unless-stopped
+
+  chatbot:
+    build: ./chatbot
+    container_name: chatbot
+    ports:
+      - "8000:80"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=SuperSecretPassword123!
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    volumes:
+      - minio_data:/data
+
+  minio-setup:
+    build: ./minio-setup
+    container_name: minio-setup
+    depends_on:
+      - minio
+    restart: "no"
+
+  ai-api:
+    build: ./ai-api
+    container_name: ai-api
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    depends_on:
+      - minio-setup
+
+  admin-tool:
+    build: ./admin-tool
+    container_name: admin-tool
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    depends_on:
+      - ai-api
+
+volumes:
+  minio_data:
