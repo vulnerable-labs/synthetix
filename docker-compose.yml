@@ -58,5 +58,12 @@ services:
     depends_on:
       - ai-api
 
+  landing-page:
+    build: ./landing-page
+    container_name: landing-page
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
 volumes:
   minio_data:
