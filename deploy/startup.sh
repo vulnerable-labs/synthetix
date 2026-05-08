@@ -6,7 +6,14 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y docker.io docker-compose-v2 git
 
-# Configure Docker to use Google DNS (Prevents "Temporary failure in name resolution" during build)
+# Nuclear DNS fix for Ubuntu 24.04 (Prevents BuildKit DNS failures)
+systemctl stop systemd-resolved || true
+systemctl disable systemd-resolved || true
+rm -f /etc/resolv.conf
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+
+# Configure Docker to use Google DNS as a fallback
 mkdir -p /etc/docker
 cat <<EOF > /etc/docker/daemon.json
 {
