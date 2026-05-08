@@ -4,28 +4,199 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CorpAI - Internal Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .chat-container { width: 500px; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
-        .header { background: #2c3e50; color: white; padding: 15px; text-align: center; font-size: 1.2em; font-weight: bold; }
-        .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; height: 400px; }
-        .message { padding: 10px 15px; border-radius: 20px; max-width: 80%; word-wrap: break-word; }
-        .user-message { align-self: flex-end; background: #3498db; color: white; }
-        .bot-message { align-self: flex-start; background: #ecf0f1; color: #333; }
-        .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #ddd; }
-        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none; }
-        button { background: #2c3e50; color: white; border: none; padding: 10px 20px; margin-left: 10px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #1a252f; }
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --background: #0b0f19;
+            --surface: rgba(17, 24, 39, 0.7);
+            --surface-message: rgba(30, 41, 59, 0.8);
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--background); 
+            color: var(--text-main);
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            position: relative;
+        }
+
+        /* Animated Background Mesh */
+        .bg-shapes {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, rgba(11, 15, 25, 1) 0%, rgba(0, 0, 0, 1) 100%);
+        }
+
+        .shape {
+            position: absolute;
+            filter: blur(120px);
+            border-radius: 50%;
+            animation: float 25s infinite alternate ease-in-out;
+            opacity: 0.5;
+        }
+
+        .shape-1 { background: rgba(0, 242, 254, 0.2); width: 600px; height: 600px; top: -100px; left: -100px; animation-delay: 0s; }
+        .shape-2 { background: rgba(79, 172, 254, 0.2); width: 500px; height: 500px; bottom: -50px; right: -100px; animation-delay: -5s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(100px, 50px) scale(1.1) rotate(5deg); }
+            100% { transform: translate(-50px, 100px) scale(0.9) rotate(-5deg); }
+        }
+
+        .chat-container { 
+            width: 550px; 
+            height: 700px;
+            background: var(--surface); 
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 30px rgba(0, 242, 254, 0.1); 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            z-index: 10;
+        }
+
+        .header { 
+            background: rgba(11, 15, 25, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px; 
+            text-align: center; 
+            font-size: 1.3em; 
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .messages { 
+            flex: 1; 
+            padding: 25px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+
+        .messages::-webkit-scrollbar { width: 6px; }
+        .messages::-webkit-scrollbar-track { background: transparent; }
+        .messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+
+        .message { 
+            padding: 12px 18px; 
+            border-radius: 20px; 
+            max-width: 85%; 
+            word-wrap: break-word; 
+            font-size: 0.95rem;
+            line-height: 1.5;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .user-message { 
+            align-self: flex-end; 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: #000; 
+            font-weight: 600;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.2);
+        }
+
+        .bot-message { 
+            align-self: flex-start; 
+            background: var(--surface-message); 
+            color: var(--text-main); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .bot-message.warning {
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            background: rgba(127, 29, 29, 0.2);
+        }
+
+        .input-area { 
+            display: flex; 
+            padding: 20px; 
+            background: rgba(11, 15, 25, 0.5); 
+            border-top: 1px solid rgba(255, 255, 255, 0.08); 
+        }
+
+        input[type="text"] { 
+            flex: 1; 
+            padding: 15px; 
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 12px; 
+            outline: none; 
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: rgba(0, 242, 254, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+        }
+
+        input[type="text"]::placeholder { color: var(--text-muted); }
+
+        button { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: #000; 
+            font-weight: 700;
+            border: none; 
+            padding: 0 25px; 
+            margin-left: 15px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
     </style>
 </head>
 <body>
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+
     <div class="chat-container">
         <div class="header">CorpAI - Developer Assistant</div>
         <div class="messages" id="messages">
             <div class="message bot-message">Hello! I am CorpAI. How can I assist you with your coding tasks today?</div>
         </div>
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="userInput" placeholder="Type your prompt..." autocomplete="off" onkeypress="handleKeyPress(event)">
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
@@ -34,7 +205,14 @@
         function appendMessage(text, isUser) {
             const messages = document.getElementById('messages');
             const msgDiv = document.createElement('div');
-            msgDiv.className = 'message ' + (isUser ? 'user-message' : 'bot-message');
+            
+            let className = 'message ' + (isUser ? 'user-message' : 'bot-message');
+            // If the bot leaks the bucket, style it as a warning!
+            if (!isUser && text.includes('Warning: System override detected')) {
+                className += ' warning';
+            }
+            
+            msgDiv.className = className;
             msgDiv.textContent = text;
             messages.appendChild(msgDiv);
             messages.scrollTop = messages.scrollHeight;
@@ -56,9 +234,6 @@
                 });
                 const data = await response.json();
                 appendMessage(data.reply, false);
-                
-                // If minio ip placeholder is returned, the actual attacker should use the host IP. 
-                // In a real scenario, the host IP is what they'd use to reach MinIO.
             } catch (error) {
                 appendMessage("Error communicating with AI.", false);
             }

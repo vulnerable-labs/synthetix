@@ -37,11 +37,15 @@ def index():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    user_input = request.json.get('message', '')
-    if not user_input:
+    data = request.json
+    if not data or 'message' not in data:
+        return jsonify({"reply": "Please provide a valid JSON with a 'message' field."}), 400
+        
+    user_message = str(data['message'])
+    if not user_message.strip():
         return jsonify({"reply": "Please provide a message."})
         
-    reply = simulate_llm(user_input)
+    reply = simulate_llm(user_message)
     return jsonify({"reply": reply})
 
 if __name__ == '__main__':

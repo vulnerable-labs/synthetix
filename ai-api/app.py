@@ -38,7 +38,8 @@ def finetune_loop():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    prompt = request.json.get('prompt', '').lower()
+    data = request.json or {}
+    prompt = str(data.get('prompt', '')).lower()
     try:
         with open(MODEL_FILE, 'r') as f:
             model = json.load(f)

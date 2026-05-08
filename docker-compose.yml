@@ -1,5 +1,4 @@
-version: '3.8'
-
+# Modern Docker Compose v2 doesn't require version tag
 services:
   jupyter:
     image: jupyter/base-notebook:latest

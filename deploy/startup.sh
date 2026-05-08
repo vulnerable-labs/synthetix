@@ -14,16 +14,25 @@ systemctl start docker
 echo "VulnOS{p01s0n3d_th3_w3ll_3scap3d_th3_c0nta1n3r}" > /root/flag.txt
 chmod 400 /root/flag.txt
 
-# Create the lab directory
+# Create the lab directory and make sure it's clean for cloning
 mkdir -p /opt/synthetix
 cd /opt/synthetix
+rm -rf ./* ./.[!.]* ./..?* 2>/dev/null || true
 
 # Clone the vulnerable-labs repository
-git clone https://github.com/vulnerable-labs/synthetix.git .
+# GIT_TERMINAL_PROMPT=0 prevents the script from hanging indefinitely if the repo goes private
+export GIT_TERMINAL_PROMPT=0
+if ! git clone https://github.com/vulnerable-labs/synthetix.git .; then
+    echo "CRITICAL ERROR: Failed to clone the Synthetix repository. Halting startup script to allow debugging."
+    exit 1
+fi
 
 # Start the lab
-# Note: Ubuntu 24.04 utilizes docker-compose-v2, so the command is 'docker compose'
-docker compose up -d --build
+# Note: Using the standalone docker-compose binary installed via apt
+if ! docker-compose up -d --build; then
+    echo "CRITICAL ERROR: Failed to build and start the Docker containers. Halting startup script to allow debugging."
+    exit 1
+fi
 
 echo "Startup script execution completed. The lab infrastructure is configured."
 
@@ -59,14 +68,17 @@ hostnamectl set-hostname synthetix
 sed -i 's/127.0.1.1.*/127.0.1.1 synthetix/' /etc/hosts
 
 # Phase 3: The Ultimate Forensic Scrub
-# 1. Stop logging daemons
+
+# 1. Vacuum journald logs while the daemon is still running
+journalctl --vacuum-time=1s || true
+rm -rf /var/log/journal/*
+
+# 2. Stop logging daemons
 # Ubuntu 24.04 defaults to systemd-journald (rsyslog is no longer default)
 systemctl stop rsyslog || true
 systemctl stop systemd-journald || true
 
-# 2. Shred system and auth logs (including journald logs)
-journalctl --vacuum-time=1s || true
-rm -rf /var/log/journal/*
+# 3. Shred system and auth logs
 truncate -s 0 /var/log/auth.log 2>/dev/null || true
 truncate -s 0 /var/log/syslog 2>/dev/null || true
 truncate -s 0 /var/log/kern.log 2>/dev/null || true
@@ -82,8 +94,12 @@ rm -rf /var/tmp/*
 # 4. Stop the current bash shell from recording history on exit
 unset HISTFILE
 
-# 5. Empty the history files
-> /root/.bash_history
+# 5. Empty the history files for all users
+for home_dir in /root /home/*; do
+    if [ -d "$home_dir" ]; then
+        > "$home_dir/.bash_history" 2>/dev/null || true
+    fi
+done
 
 # 6. Clear active memory history and force immediate shutdown
 # The VM will shut down, making it perfectly pristine for a GCP Image Snapshot
