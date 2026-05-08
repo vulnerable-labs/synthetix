@@ -6,9 +6,18 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y docker.io docker-compose-v2 git
 
+# Configure Docker to use Google DNS (Prevents "Temporary failure in name resolution" during build)
+mkdir -p /etc/docker
+cat <<EOF > /etc/docker/daemon.json
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+EOF
+
 # Enable and start Docker
+systemctl daemon-reload
 systemctl enable docker
-systemctl start docker
+systemctl restart docker
 
 # Disable any internal firewalls that might block traffic
 ufw disable || true
