@@ -11,7 +11,9 @@ services:
     restart: unless-stopped
 
   chatbot:
-    build: ./chatbot
+    build:
+      context: ./chatbot
+      network: host
     container_name: chatbot
     ports:
       - "8000:80"
@@ -32,14 +34,18 @@ services:
       - minio_data:/data
 
   minio-setup:
-    build: ./minio-setup
+    build:
+      context: ./minio-setup
+      network: host
     container_name: minio-setup
     depends_on:
       - minio
     restart: "no"
 
   ai-api:
-    build: ./ai-api
+    build:
+      context: ./ai-api
+      network: host
     container_name: ai-api
     ports:
       - "5000:5000"
@@ -48,7 +54,9 @@ services:
       - minio-setup
 
   admin-tool:
-    build: ./admin-tool
+    build:
+      context: ./admin-tool
+      network: host
     container_name: admin-tool
     user: root
     volumes:
@@ -58,7 +66,9 @@ services:
       - ai-api
 
   landing-page:
-    build: ./landing-page
+    build:
+      context: ./landing-page
+      network: host
     container_name: landing-page
     ports:
       - "80:80"
