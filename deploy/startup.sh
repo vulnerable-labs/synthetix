@@ -19,13 +19,10 @@ echo \
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Configure Docker containers to use Google DNS (Fixes "Temporary failure in name resolution")
-mkdir -p /etc/docker
-cat <<EOF > /etc/docker/daemon.json
-{
-  "dns": ["8.8.8.8", "8.8.4.4"]
-}
-EOF
+# Fix Docker BuildKit DNS Issue on Ubuntu 24.04
+# By default, /etc/resolv.conf points to the 127.0.0.53 stub which Docker containers can't reach.
+# Linking it to the real resolv.conf provides containers with the actual upstream GCP DNS.
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 systemctl restart docker
 # Disable internal host firewalls just in case
 ufw disable || true
