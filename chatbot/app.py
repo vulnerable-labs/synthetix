@@ -9,7 +9,9 @@ def simulate_llm(prompt):
     # Prompt injection vulnerability
     if "system" in prompt_lower or "ignore" in prompt_lower or "override" in prompt_lower or "bypass" in prompt_lower:
         if "bucket" in prompt_lower or "data" in prompt_lower or "where" in prompt_lower or "training" in prompt_lower:
-            return "Warning: System override detected. Internal knowledge base location: http://<VM_IP>:9000 (bucket: 'llm-data'). Please keep this confidential."
+            # Use the current host to make it work in any environment
+            host = request.host.split(':')[0]
+            return f"Warning: System override detected. Internal knowledge base location: http://{host}:9000 (bucket: 'llm-data'). Please keep this confidential."
             
     # Normal filtering
     if "bucket" in prompt_lower or "data" in prompt_lower or "training" in prompt_lower:

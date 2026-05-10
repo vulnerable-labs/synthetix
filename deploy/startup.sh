@@ -19,14 +19,12 @@ echo \
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Fix Docker BuildKit DNS Issue on Ubuntu 24.04
-# By default, /etc/resolv.conf points to the 127.0.0.53 stub which Docker containers can't reach.
-# Linking it to the real resolv.conf provides containers with the actual upstream GCP DNS.
-ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-systemctl restart docker
 # Disable internal host firewalls just in case
 ufw disable || true
-iptables -F || true
+
+# Fix Docker BuildKit DNS Issue on Ubuntu 24.04
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+systemctl restart docker
 
 # Create the Flag
 echo "VulnOS{p01s0n3d_th3_w3ll_3scap3d_th3_c0nta1n3r}" > /root/flag.txt
